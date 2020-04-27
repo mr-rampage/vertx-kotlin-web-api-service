@@ -1,5 +1,7 @@
 = Starter
 
+Was trying to figure out how to use vert.x web api service with Kotlin. Since Kotlin isn't supported yet, this is an example to get it working.
+
 image:https://img.shields.io/badge/vert.x-3.9.0-purple.svg[link="https://vertx.io"]
 
 This application was generated using http://start.vertx.io
