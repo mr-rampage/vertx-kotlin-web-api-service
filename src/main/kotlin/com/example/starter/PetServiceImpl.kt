@@ -8,8 +8,8 @@ import io.vertx.ext.web.api.OperationRequest
 import io.vertx.ext.web.api.OperationResponse
 
 class PetServiceImpl : PetService {
-  override fun listPets(context: OperationRequest?, resultHandler: Handler<AsyncResult<OperationResponse>>?) {
+  override fun listPets(context: OperationRequest, resultHandler: Handler<AsyncResult<OperationResponse>>) {
     val response = Future.succeededFuture(OperationResponse.completedWithJson(JsonObject().put("test", "hello")).setStatusCode(200))
-    resultHandler?.handle(response)
+    resultHandler.handle(response)
   }
 }
