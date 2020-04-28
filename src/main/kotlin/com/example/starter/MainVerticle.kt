@@ -1,35 +1,36 @@
 package com.example.starter
 
-import io.vertx.core.AbstractVerticle
-import io.vertx.core.Promise
+import io.vertx.core.Future
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory
+import io.vertx.kotlin.core.eventbus.completionHandlerAwait
+import io.vertx.kotlin.core.http.listenAwait
+import io.vertx.kotlin.coroutines.CoroutineVerticle
+import io.vertx.kotlin.coroutines.await
 import io.vertx.serviceproxy.ServiceBinder
 
-class MainVerticle : AbstractVerticle() {
+class MainVerticle : CoroutineVerticle() {
 
-  override fun start(startPromise: Promise<Void>?) {
+  override suspend fun start() {
+    val routerFactoryFuture = Future.future<OpenAPI3RouterFactory>()
+    OpenAPI3RouterFactory.create(vertx, "conduit.yaml", routerFactoryFuture)
+    val routerFactory = routerFactoryFuture.await()
 
-    val consumer = ServiceBinder(vertx)
-      .setAddress("pet.service")
-      .registerLocal(PetService::class.java, PetServiceImpl())
+    try {
+      val router = routerFactory.mountServicesFromExtensions().router
 
-    OpenAPI3RouterFactory.create(vertx, "conduit.yaml") {
-      if (it.succeeded()) {
-        println("Loaded swagger file")
-        val routerFactory = it.result()
-        routerFactory.mountServicesFromExtensions()
-        val router = routerFactory.router
-        val server = vertx.createHttpServer()
-        server
-          .requestHandler(router)
-          .listen(8080) {
-            consumer.completionHandler(startPromise);
-            println("Started server on port 8080")
-          }
-      } else {
-        println("Failed to load swagger file")
-        startPromise?.fail("Failed to load swagger file");
-      }
+      vertx
+        .createHttpServer()
+        .requestHandler(router)
+        .listenAwait(8080)
+
+      ServiceBinder(vertx)
+        .setAddress("pet.service")
+        .registerLocal(PetService::class.java, PetServiceImpl())
+        .completionHandlerAwait()
+
+      println("Started server on port 8080")
+    } catch (e: Exception) {
+      println("Unable to start server")
     }
   }
 }
